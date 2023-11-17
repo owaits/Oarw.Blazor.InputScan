@@ -5,7 +5,6 @@ using Microsoft.JSInterop;
 using Blazor.Bluetooth;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
-using System.Xml.Linq;
 
 namespace Oarw.Blazor.InputScan
 {
@@ -32,7 +31,7 @@ namespace Oarw.Blazor.InputScan
         public IServiceProvider? ServiceProvider { get; set; }
 
         [Inject]
-        public ILogger<InputScan> Log { get; set;}
+        public ILogger<InputScan> Log { get; set; }
 
         protected IBluetoothNavigator? Bluetooth { get; set; }
 
@@ -67,6 +66,12 @@ namespace Oarw.Blazor.InputScan
         [Parameter]
         public bool KeypadVisible { get; set; } = false;
 
+
+        [Parameter]
+        public bool CameraEnabled { get; set; } = false;
+
+        public bool CameraVisible { get; set; } = false;
+
         /// <summary>
         /// Gets or sets the text entered when optional key A is pressed.
         /// </summary>
@@ -92,12 +97,12 @@ namespace Oarw.Blazor.InputScan
         {
             Bluetooth = ServiceProvider?.GetService<IBluetoothNavigator>();
 
-            if(Bluetooth == null)
+            if (Bluetooth == null)
             {
                 BluetoothEnabled = false;
             }
 
-            if(BluetoothEnabled)
+            if (BluetoothEnabled)
             {
                 try
                 {
@@ -237,15 +242,12 @@ namespace Oarw.Blazor.InputScan
         [Parameter]
         public bool PinTop { get; set; }
 
-        [Parameter]
-        public bool ShowCameraScan { get; set; }
-
 
         public Queue<object> ScanLog { get; set; } = new Queue<object>(5);
 
         private Task OnCameraError(string message)
         {
-            //ScanLog = message;
+            ScanLog.Enqueue(message);
             StateHasChanged();
             return Task.CompletedTask;
         }
@@ -362,7 +364,7 @@ namespace Oarw.Blazor.InputScan
 
                     if (connectNewDevice)
                     {
-                        device = await Bluetooth?.RequestDevice(query);
+                        device = await Bluetooth.RequestDevice(query);
                     }
                     else
                     {
@@ -377,13 +379,13 @@ namespace Oarw.Blazor.InputScan
             }
             catch(RequestDeviceCancelledException ex)
             {
-                //User cancelled the bluetooth request.
+                //User cancelled the Bluetooth request.
                 Log.LogInformation(ex, "User cancelled Bluetooth pairing.");
             }
             catch (Exception ex)
             {
-                //User cancelled the bluetooth request.
-                Log.LogError(ex, "Unable to connect to bluetooth device.");
+                //User cancelled the Bluetooth request.
+                Log.LogError(ex, "Unable to connect to Bluetooth device.");
             }
             finally
             {
@@ -508,7 +510,25 @@ namespace Oarw.Blazor.InputScan
 
         #endregion
 
+        #region Camera
 
+        public async Task ToggleCamera()
+        {
+            CameraVisible = !CameraVisible;
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Called when the camera sees a QR code.
+        /// </summary>
+        /// <param name="code">The code.</param>
+        private void OnCameraScan(string code)
+        {
+            //Set the scan value using the camera input.
+            ScanValue = code;
+        }
+
+        #endregion
 
         public void Dispose()
         {

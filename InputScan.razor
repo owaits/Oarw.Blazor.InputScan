@@ -1,4 +1,5 @@
-﻿@using global::Blazor.Bluetooth;
+﻿@using ZXingBlazor.Components
+@using global::Blazor.Bluetooth;
 @using Microsoft.Extensions.Logging;
 @using System.Text;
 @using System.Threading;
@@ -16,7 +17,13 @@
     }
     <div class="input-group">
         <div class="input-group-prepend">
-            <button type="button" @ref="scanMethod" class="input-group-text" @onclick="()=> ShowCameraScan = !ShowCameraScan"><i class="fas fa-barcode" />&nbsp;@(string.IsNullOrEmpty(Title) ? "SCAN" : Title)</button>
+            <button type="button" @ref="scanMethod" class="input-group-text" ><i class="fas fa-barcode" />&nbsp;@(string.IsNullOrEmpty(Title) ? "SCAN" : Title)</button>
+            @if (CameraEnabled)
+            {
+                <button type="button" class="input-group-text" @onclick="async ()=> ToggleCamera()">
+                    <i class="fas fa-camera @(CameraVisible ? "text-success" :  "")" />
+                </button>
+            }
             @if(BluetoothEnabled)
             {
                 <button type="button" class="input-group-text" @onclick="async ()=> await ConnectBluetoothScanner(true)"><i class="fab fa-bluetooth @(IsBluetoothScannerConnected ? "text-primary" : (IsBluetoothScannerConnecting ? "text-warning" : ""))" /></button>
@@ -46,7 +53,7 @@
                     }
                 </button>
                <div class="dropdown-menu">
-                   @foreach(var instruction in Instructions)
+                   @foreach(var instruction in Instructions.Where(i=>!i.Hidden))
                     {
                         <button type="button" class="btn dropdown-item" @onclick="(()=> SelectInstruction(instruction))"><i class="@instruction.Icon" />&nbsp;@instruction.Title</button>
                     }
@@ -91,6 +98,22 @@
                 </div>
             </div>
         </div>
+    }
+
+    @if (CameraEnabled && CameraVisible)
+    {
+@*         <div class="m-1 alert alert-info d-flex" role="alert">
+            <div class="row mx-auto" style="max-width:400px"> *@
+                <BarcodeReader ScanResult="((e) => { ScanValue=e; CameraVisible=false;})"
+                        Close="(()=>CameraVisible=!CameraVisible)"
+                        OnError="OnCameraError"
+                        ScanBtnTitle="SCAN"
+                        ResetBtnTitle="RESET"
+                        CloseBtnTitle="CLOSE"
+                        SelectDeviceBtnTitle="Select Camera"
+                        />
+@*             </div>
+        </div>  *@       
     }
 
     <CascadingValue Value="this">

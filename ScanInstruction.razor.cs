@@ -35,6 +35,12 @@ namespace Oarw.Blazor.InputScan
         [Parameter]
         public bool ClearLog { get; set; } = false;
 
+        /// <summary>
+        /// Gets or sets whether this instruction is hidden from the user and must be selected through code.
+        /// </summary>
+        [Parameter]
+        public bool Hidden { get; set; } = false;
+
         [Parameter, EditorRequired]
         public Func<string, Task<object>>? OnScan { get; set; }
 
