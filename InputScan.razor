@@ -16,37 +16,32 @@
         </div>
     }
     <div class="input-group">
-        <div class="input-group-prepend">
-            <button type="button" @ref="scanMethod" class="input-group-text" ><i class="fas fa-barcode" />&nbsp;@(string.IsNullOrEmpty(Title) ? "SCAN" : Title)</button>
-            @if (CameraEnabled)
-            {
-                <button type="button" class="input-group-text" @onclick="async ()=> ToggleCamera()">
-                    <i class="fas fa-camera @(CameraVisible ? "text-success" :  "")" />
-                </button>
-            }
-            @if(BluetoothEnabled)
-            {
-                <button type="button" class="input-group-text" @onclick="async ()=> await ConnectBluetoothScanner(true)"><i class="fab fa-bluetooth @(IsBluetoothScannerConnected ? "text-primary" : (IsBluetoothScannerConnecting ? "text-warning" : ""))" /></button>
-            }  
-            @if (KeypadEnabled)
-            {
-                <button type="button" class="input-group-text" @onclick="async ()=> ToggleKeypad()">
-                    <i class="fas fa-keyboard @(KeypadVisible ? "text-success" :  "")" /></button>
-            }
-        </div>
+        <button type="button" @ref="scanMethod" class="input-group-text" ><i class="fas fa-barcode" />&nbsp;@(string.IsNullOrEmpty(Title) ? "SCAN" : Title)</button>
+        @if (CameraEnabled)
+        {
+            <button type="button" class="input-group-text" @onclick="async ()=> ToggleCamera()">
+                <i class="fas fa-camera @(CameraVisible ? "text-success" :  "")" />
+            </button>
+        }
+        @if(BluetoothEnabled)
+        {
+            <button type="button" class="input-group-text" @onclick="async ()=> await ConnectBluetoothScanner(true)"><i class="fab fa-bluetooth @(IsBluetoothScannerConnected ? "text-primary" : (IsBluetoothScannerConnecting ? "text-warning" : ""))" /></button>
+        }  
+        @if (KeypadEnabled)
+        {
+            <button type="button" class="input-group-text" @onclick="async ()=> ToggleKeypad()">
+                <i class="fas fa-keyboard @(KeypadVisible ? "text-success" :  "")" /></button>
+        }
         <input @ref="scanInput" id="scanInput" type="text" class="form-control text-center" rows="3" @bind="@(ScanValue)" @onkeydown="HandleKeyDown" autofocus />
         @if(KeypadEnabled)
         {
-            <div class="input-group-append">
-                <button class="btn input-group-text" type="button" @onclick="()=> KeypadBackspace()">
-                    <i class="fas fa-backspace" />
-                </button>
-            </div>
+            <button class="input-group-text" type="button" @onclick="()=> KeypadBackspace()">
+                <i class="fas fa-backspace" />
+            </button>
         }
         @if(Variant == Variants.Dropdown)
         {
-            <div class="input-group-append">
-                <button class="btn input-group-text dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button class="input-group-text dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     @if(SelectedInstruction != null)
                     {
                         <i class="@SelectedInstruction.Icon"  />
@@ -58,7 +53,6 @@
                         <button type="button" class="btn dropdown-item" @onclick="(()=> SelectInstruction(instruction))"><i class="@instruction.Icon" />&nbsp;@instruction.Title</button>
                     }
                 </div>
-            </div>
         }
     </div>
     @foreach (var logEntry in ScanLog.Reverse())
