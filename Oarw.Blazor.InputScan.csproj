@@ -8,7 +8,7 @@
     <PackageLicenseFile>README.md</PackageLicenseFile>
     <RepositoryUrl>https://github.com/owaits/Oarw.Blazor.InputScan</RepositoryUrl>
 
-	<Version>1.3.2</Version>
+	<Version>1.3.3</Version>
 	<Company>OW Productions Ltd.</Company>
 	<Copyright>Copyright © OW Productions Ltd. $(Year:yyyy)</Copyright>
     <Title>QR and Barcode Input Control for Blazor</Title>
