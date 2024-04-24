@@ -3,7 +3,6 @@
 @using Microsoft.Extensions.Logging;
 @using System.Text;
 @using System.Threading;
-@*<input type="text" class="form-control" rows="3" @bind="@(bind)" onchange="@(()=> onScan())" autofocus />*@
 
 <div class="p-0 mb-1 @(PinTop ? "sticky-top" :"")" onkeydown="return event.key != 'Enter';">
     @if (Variant == Variants.RadioButtons)
@@ -96,18 +95,14 @@
 
     @if (CameraEnabled && CameraVisible)
     {
-@*         <div class="m-1 alert alert-info d-flex" role="alert">
-            <div class="row mx-auto" style="max-width:400px"> *@
-                <BarcodeReader ScanResult="((e) => { ScanValue=e; CameraVisible=false;})"
-                        Close="(()=>CameraVisible=!CameraVisible)"
-                        OnError="OnCameraError"
-                        ScanBtnTitle="SCAN"
-                        ResetBtnTitle="RESET"
-                        CloseBtnTitle="CLOSE"
-                        SelectDeviceBtnTitle="Select Camera"
-                        />
-@*             </div>
-        </div>  *@       
+        <BarcodeReader ScanResult="((e) => { ScanValue=e; CameraVisible=false;})"
+                Close="(()=>CameraVisible=!CameraVisible)"
+                OnError="OnCameraError"
+                ScanBtnTitle="SCAN"
+                ResetBtnTitle="RESET"
+                CloseBtnTitle="CLOSE"
+                SelectDeviceBtnTitle="Select Camera"
+                />    
     }
 
     <CascadingValue Value="this">
@@ -119,20 +114,6 @@
 {
     @SelectedInstruction.ChildContent
 }
-
-
-
-@*@if(ShowCameraScan)
-{
-    <BarcodeReader ScanResult="((e) => { ScanValue=e; ShowCameraScan=false;})"
-                           Close="(()=>ShowCameraScan=!ShowCameraScan)"
-                           OnError="OnCameraError"
-                           ScanBtnTitle="SCAN"
-                           ResetBtnTitle="RESET"
-                           CloseBtnTitle="CLOSE"
-                           SelectDeviceBtnTitle="Select Camera"
-                           />
-}*@
 
 
 <Audio @ref="successSound" Source="./_content/Oarw.Blazor.InputScan/audio/SuccessSoundFX.mp3" />
