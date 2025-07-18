@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Oarw.Blazor.InputScan
 {
-    public partial class InputScan : IDisposable
+    public partial class InputScan : IAsyncDisposable
     {
         public enum Variants
         {
@@ -92,6 +92,12 @@ namespace Oarw.Blazor.InputScan
 
         [Parameter]
         public RenderFragment ChildContent { get; set; }
+
+        /// <summary>
+        /// Gets or sets the interval between reconnect attempts to a disconnected device such as a scanner.
+        /// </summary>
+        [Parameter]
+        public TimeSpan DeviceReconnectInterval { get; set; } = new TimeSpan(0, 0, 5);
 
         protected override async Task OnInitializedAsync()
         {
@@ -284,7 +290,7 @@ namespace Oarw.Blazor.InputScan
 
         private string bluetoothScanBuffer;
 
-        private Timer bluetoothConnectionTimer;
+        private Timer? bluetoothConnectionTimer;
 
         private IDevice? connectedBluetoothDevice = null;
 
@@ -296,7 +302,17 @@ namespace Oarw.Blazor.InputScan
             get { return connectedBluetoothDevice; } 
             set
             {
+                if(connectedBluetoothDevice != null)
+                {
+                    connectedBluetoothDevice.OnGattServerDisconnected -= OnBluetoothDeviceDisconnected;
+                }
+
                 connectedBluetoothDevice = value;
+
+                if (connectedBluetoothDevice != null)
+                {
+                    connectedBluetoothDevice.OnGattServerDisconnected += OnBluetoothDeviceDisconnected;
+                }
 
                 if (OnBluetoothDeviceConnected != null)
                 {
@@ -321,6 +337,10 @@ namespace Oarw.Blazor.InputScan
                 if(isBluetoothScannerConnected != value)
                 {
                     isBluetoothScannerConnected = value;
+
+                    if (isBluetoothScannerConnected)
+                        isBluetoothScannerConnecting = false;
+
                     InvokeAsync(async () => StateHasChanged());
                 }
             }
@@ -397,7 +417,7 @@ namespace Oarw.Blazor.InputScan
         private async Task BeginConnectToBluetoothScanner(object state)
         {
             IDevice? device = (IDevice?)state;
-            await InvokeAsync(async () =>
+            await InvokeAsync((Func<Task>)(async () =>
             {
                 try
                 {
@@ -417,37 +437,50 @@ namespace Oarw.Blazor.InputScan
                     };
                     await characteristic.StartNotifications();
 
-                    device.OnGattServerDisconnected += async () =>
-                    {
-                        IsBluetoothScannerConnected = false;
-                        ConnectedBluetoothDevice = null;
-
-                        await BeginConnectToBluetoothScanner(device);
-                    };
-
                     StateHasChanged();
                 }
                 catch (Exception ex)
                 {
                     Log.LogWarning(ex, "Attempt to connect to bluetooth scanner failed.");
                 }
-            });
+            }));
 
             if (!device.Gatt.Connected)
             {
                 if (bluetoothConnectionTimer == null)
                 {
-                    bluetoothConnectionTimer = new Timer(new TimerCallback((state)=> BeginConnectToBluetoothScanner(device)), device, TimeSpan.FromSeconds(15), Timeout.InfiniteTimeSpan);
+                    bluetoothConnectionTimer = new Timer(new TimerCallback((state)=> BeginConnectToBluetoothScanner(device)), device, DeviceReconnectInterval, Timeout.InfiniteTimeSpan);
                 }
                 else
                 {
-                    bluetoothConnectionTimer.Change(TimeSpan.FromSeconds(15), Timeout.InfiniteTimeSpan);
+                    bluetoothConnectionTimer.Change(DeviceReconnectInterval, Timeout.InfiniteTimeSpan);
                 }
             }
 
-
             ConnectedBluetoothDevice = device;
-            IsBluetoothScannerConnected = device.Gatt.Connected;            
+            IsBluetoothScannerConnected = device.Gatt.Connected;
+        }
+
+        private Action? bluetoothDeviceDisconnectedHandler = null;
+
+        /// <summary>
+        /// Called when a connected bluetooth device disconnects and attempts to reconnect.
+        /// </summary>
+        private async void OnBluetoothDeviceDisconnected()
+        {
+            var disconnectedDevice = ConnectedBluetoothDevice;
+
+            IsBluetoothScannerConnected = false;
+            ConnectedBluetoothDevice = null;
+
+            if (!isDisposed && disconnectedDevice != null)
+            {
+                //Indicate that we are trying to reconnect to the device
+                IsBluetoothScannerConnecting = true;
+
+                //Try an reconnect to the disconnected device at the reconnect internal.
+                await BeginConnectToBluetoothScanner(disconnectedDevice);
+            }
         }
 
         #endregion
@@ -530,17 +563,27 @@ namespace Oarw.Blazor.InputScan
 
         #endregion
 
-        public void Dispose()
+        private bool isDisposed = false;
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources asynchronously.
+        /// </summary>
+        /// <returns>
+        /// A task that represents the asynchronous dispose operation.
+        /// </returns>
+        public async ValueTask DisposeAsync()
         {
-            if(bluetoothConnectionTimer != null)
+            isDisposed = true;
+
+            if (bluetoothConnectionTimer != null)
             {
                 bluetoothConnectionTimer.Dispose();
                 bluetoothConnectionTimer = null;
             }
 
-            if(ConnectedBluetoothDevice != null)
+            if (ConnectedBluetoothDevice != null)
             {
-                ConnectedBluetoothDevice.Gatt.Disonnect();
+                await ConnectedBluetoothDevice.Gatt.Disonnect();
                 ConnectedBluetoothDevice = null;
             }
         }

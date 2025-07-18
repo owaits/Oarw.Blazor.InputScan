@@ -15,7 +15,7 @@
         </div>
     }
     <div class="input-group">
-        <div class="input-group-prepend input-group-text">
+        <div class="input-group-prepend">
             <button type="button" @ref="scanMethod" class="input-group-text"><i class="fas fa-barcode" />&nbsp;@(string.IsNullOrEmpty(Title) ? "SCAN" : Title)</button>
             @if (CameraEnabled)
             {
@@ -34,7 +34,7 @@
             }
         </div>
         <input @ref="scanInput" id="scanInput" type="text" class="form-control text-center" rows="3" @bind="@(ScanValue)" @onkeydown="HandleKeyDown" autofocus />
-        <div class="input-group-append input-group-text">
+        <div class="input-group-append">
             @if (KeypadEnabled)
             {
                 <button class="input-group-text" type="button" @onclick="()=> KeypadBackspace()">
